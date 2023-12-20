@@ -176,7 +176,7 @@ class Seq2Seq(nn.Module):
         )
 
         self.sequential.add_module(
-            "batchnorm1", nn.BatchNorm2d(num_features=num_kernels)
+            "batchnorm1", nn.BatchNorm3d(num_features=num_kernels)
         )
 
         # Add rest of the layers
@@ -189,7 +189,7 @@ class Seq2Seq(nn.Module):
                 )
             )
             self.sequential.add_module(
-                f"batchnorm{layer}", nn.BatchNorm2d(num_features=num_kernels)
+                f"batchnorm{layer}", nn.BatchNorm3d(num_features=num_kernels)
             )
 
         # Add Convolutional Layer to predict output frame
@@ -205,7 +205,7 @@ class Seq2Seq(nn.Module):
         """
         output = self.sequential(X)
         # Return only the last output frame
-        output = self.conv(output[:, -1])
+        output = self.conv(output[:, :, -1])
         output = nn.Sigmoid()(output) * 255    # normalise and scale output
 
         return output
