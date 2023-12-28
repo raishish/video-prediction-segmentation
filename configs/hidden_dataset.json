@@ -1,0 +1,33 @@
+{
+    "models": {
+        "predictor": {
+            "ConvLSTM": {
+                "num_channels": 3,
+                "num_kernels": 64,
+                "kernel_size": [3, 3],
+                "padding": [1, 1],
+                "activation": "relu",
+                "frame_size": [160, 240],
+                "num_layers": 3
+            }
+        },
+        "segmenter": {
+            "Segmenter": {
+                "num_classes": 49,
+                "im_size": [160, 240],
+                "patch_size": 8,
+                "in_channels": 3,
+                "encoder_embed_dim": 256,
+                "encoder_mlp_dim": 1024,
+                "encoder_num_heads": 4,
+                "encoder_num_layers": 6,
+                "encoder_dropout": 0.01,
+                "decoder_embed_dim": 256,
+                "decoder_mlp_dim": 1024,
+                "decoder_num_heads": 4,
+                "decoder_num_layers": 6,
+                "decoder_dropout": 0.01
+            }
+        }
+    }
+}
