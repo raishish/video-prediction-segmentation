@@ -212,12 +212,20 @@ class Seq2Seq(nn.Module):
 
 
 def _process_one_batch(
-    data, batch_num, model, device, mode: str,
-    optimizer, loss_criterion, acc_criterion=None,
+    data: torch.Tensor,
+    batch_num: int,
+    model: torch.nn.Module,
+    device: torch.device,
+    mode: str,
+    optimizer,
+    loss_criterion,
+    acc_criterion=None,
     verbose: int = 0
 ):
     """
     Process one batch of training or validation data
+
+    # NOTE: Only supports batch_size = 1
 
     Args:
         data (torch.Tensor): One batch size worth data
@@ -236,28 +244,26 @@ def _process_one_batch(
     t1 = time()
     batch_loss = 0
     batch_acc = 0
-    data = data.permute(0, 4, 1, 2, 3)  # shape = [batch_size, 3, 22, 160, 240]
-    input = data[:, :, :11, :]          # first input = first 11 frames
-    pred = None
+    data = data.to(device)
+
+    # Get the first (only) video in the batch (batch_size = 1)
+    pred_video = torch.zeros_like(data)
+    pred_video = pred_video.to(device)
+    pred_video[:, :11, :] = data[:, :11, :]  # first input = first 11 frames
 
     for timestep in range(11):
-        # target = 12th frame from beginning of input
-        target = data[:, :, 11 + timestep, :].float()
-        # Add previously predicted frame to the input
-        if timestep > 0:
-            input = torch.cat((
-                input[:, :, 1:, :],  # skip the first frame of prev input
-                pred                 # add the previous predicted frame
-            ), dim=2)
+        input_frames = pred_video[:, timestep: timestep + 11, :].permute(0, 4, 1, 2, 3)
+        # target_frame = 12th frame from beginning of input
+        target_frame = data[:, 11 + timestep, :].float()
 
-        input.to(device)
-        target.to(device)
-        pred = model(input)
+        pred_frame = model(input_frames)
+        pred_frame = pred_frame.permute(0, 2, 3, 1)
+        pred_video[0, timestep + 11, :] = pred_frame
 
         if mode == "train":
             # calculate loss per predicted frame and backprop
             loss = torch.sqrt(
-                loss_criterion(pred.flatten(), target.flatten())
+                loss_criterion(pred_frame.flatten(), target_frame.flatten())
             )
             batch_loss += loss
             optimizer.zero_grad()
@@ -267,14 +273,17 @@ def _process_one_batch(
     # Calculate (val) loss and accuracy on last predicted frame
     if mode == "eval":
         batch_loss = torch.sqrt(
-            loss_criterion(pred.flatten(), target.flatten())
+            loss_criterion(pred_frame.flatten(), target_frame.flatten())
         )
     if acc_criterion:
-        batch_acc = acc_criterion(pred, target)
+        batch_acc = acc_criterion(pred_frame, target_frame)
 
     elapsed = str(timedelta(seconds=time() - t1))
     if verbose > 1:
-        print(f"Processed {mode} batch {batch_num} in {elapsed}s")
-        print("-" * 60)
+        print(
+            f"[{mode}] Batch {batch_num} ",
+            f"| Loss = {batch_loss.item()} ",
+            f"| Time = {elapsed}s"
+        )
 
     return batch_loss, batch_acc

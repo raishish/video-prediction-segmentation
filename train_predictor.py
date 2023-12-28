@@ -140,14 +140,14 @@ def train(
         else:
             counter += 1
 
-        epoch_metrics = f"\nEpoch: {epoch + 1} - " + \
-                        f"Training loss: {avg_train_loss:.4f} - " + \
-                        (f"Training acc: {avg_train_acc * 100:.2f}% - " if acc_criterion else '') + \
-                        f"Validation loss: {avg_val_loss:.4f} - " + \
-                        (f"Validation acc: {avg_val_acc * 100:.2f}% - " if acc_criterion else '') + \
-                        f"Best Validation Loss: {best_val_loss:.4f}"
-
-        print(epoch_metrics)
+        print(
+            f"\nEpoch: {epoch + 1} - ",
+            f"Training loss: {avg_train_loss:.4f} - ",
+            (f"Training acc: {avg_train_acc * 100:.2f}% - " if acc_criterion else ''),
+            f"Validation loss: {avg_val_loss:.4f} - ",
+            (f"Validation acc: {avg_val_acc * 100:.2f}% - " if acc_criterion else ''),
+            f"Best Validation Loss: {best_val_loss:.4f}"
+        )
         print("=" * 60, "\n")
 
         # Early stopping condition
@@ -197,13 +197,6 @@ def get_commandline_args():
         required=False
     )
     parser.add_argument(
-        "--batchsize",
-        "-b",
-        help="Batchsize for training",
-        type=int,
-        required=False
-    )
-    parser.add_argument(
         "--epochs",
         "-e",
         help="Number of epochs for training",
@@ -240,10 +233,7 @@ if __name__ == "__main__":
     val_dir = os.path.join(dataset_dir, "val")
 
     transform = None
-    if args.batchsize:
-        batch_size = args.batchsize
-    else:
-        batch_size = 8
+    batch_size = 1  # supports only batch_size = 1
 
     train_dataloader = _create_dataloader(
         train_dir, PredictionDataset, batch_size, transform, shuffle=True
