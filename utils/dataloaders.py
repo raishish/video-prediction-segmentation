@@ -12,11 +12,14 @@ from torch.utils.data import Dataset, DataLoader
 class SegmentationDataset(Dataset):
     def __init__(self, datadir, transform=None):
         """
-        Creates a pytorch dataset from the dataset folders
+        Creates a pytorch dataset for segmentation
 
         Args:
             datadir (str): Path to root folder of dataset
-            transform : transformations
+            transform: function to transform data
+        Returns:
+            iterator over data samples containing
+            [image_tensor, mask_tensor]
         """
         self.datadir = datadir
         self.transform = transform
@@ -55,24 +58,34 @@ class SegmentationDataset(Dataset):
 class PredictionDataset(Dataset):
     def __init__(self, datadir, transform=None):
         """
-        Creates a pytorch dataset from all the dataset folders
+        Creates a pytorch dataset for next frame prediction
 
         Args:
             datadir (str): Path to root folder of dataset
+            transform: function to transform data
+        Returns:
+            iterator over data samples containing
+            [vid_tensor] <- contains all 22 frames
         """
         self.datadir = datadir
         self.transform = transform
         self.data = []
 
-        vid_dirs = [f.path for f in os.scandir(self.datadir) if f.is_dir()]
+        vid_dirs = [f.name for f in os.scandir(datadir) if f.is_dir()]
 
-        for vid_path in vid_dirs:
+        sorted_vid_dirs = sorted(
+            vid_dirs,
+            key=lambda x: int(x.split('_')[1])
+        )
+        sorted_vid_paths = [os.path.join(datadir, f) for f in sorted_vid_dirs]
+
+        for vid_path in sorted_vid_paths:
             image_paths = [
                 f for f in os.listdir(vid_path) if f.endswith('.png')
             ]
             sorted_image_paths = sorted(
                 image_paths,
-                key=lambda x: int(x.split('_')[-1].split('.')[0])
+                key=lambda x: int(x.split('_')[1].split('.')[0])
             )
             vid_arr = []
 
@@ -90,10 +103,10 @@ class PredictionDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        video_tensor = self.data[idx]
+        vid_tensor = self.data[idx]
         if self.transform:
-            video_tensor = self.transform(video_tensor)
-        return video_tensor
+            vid_tensor = self.transform(vid_tensor)
+        return vid_tensor
 
 
 def _create_dataloader(
@@ -112,7 +125,7 @@ def _create_dataloader(
     """
     t1 = time()
     dataset = dataset_cls(dataset_dir, transform=None)
-    print("Started creating train_dataloader ...")
+    print(f"Started creating {dataset_cls.__name__} dataloader ...")
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     elapsed = str(timedelta(seconds=time() - t1))
     print(
