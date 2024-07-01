@@ -3,6 +3,16 @@
 ## Overview
 This project focuses on the challenging tasks of video prediction and mask segmentation. It employs ConvLSTM (Convolutional Long Short-Term Memory) networks for predicting future frames in a video sequence and segments objects by generating masks. This approach can be particularly useful in applications such as video surveillance, autonomous driving, and dynamic scene understanding.
 
+## Motivation
+This was the final project required in course DS-GA 1008 Deep Learning (with Yann LeCun and Alfredo Canziani). The current plan is to build on top of this to tackle this problem statement with newer approaches in the domain.
+
+## Results
+### Segmenter + ConvLSTM
+![Segmenter + ConvLSTM Results](images/segmenter+convlstm-frame.png) 
+
+### Segmenter + MSPred
+![Segmenter + MSPred Results](images/segmenter+mspred-frame.png) 
+
 ## Features
 - **Video Prediction**: Uses ConvLSTM to predict future frames based on past sequences.
 - **Mask Segmentation**: Segments objects in video frames to understand scene dynamics better.
